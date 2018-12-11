@@ -5,8 +5,6 @@ all:
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M="$(PWD)" clean
 do_all:
-	./part.sh
-	
 	mkfs.vfat /dev/sbd0p1
 	mkfs.vfat /dev/sbd0p5
 	mkfs.vfat /dev/sbd0p6
