@@ -24,5 +24,9 @@ do_all:
 	umount /tmp/p1
 	umount /tmp/p2
 	rm -r /tmp/p1 /tmp/p2
+reload: all
+	rmmod bl_drv
+	insmod bl_drv.ko
+	dd if=/dev/sbd0 of=/home/dmitry/ifmo/io2/disk3.img
 	
 

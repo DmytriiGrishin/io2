@@ -42,25 +42,29 @@ module_param(nsectors, int, 0);
 #define BR_SIGNATURE 0xAA55
 
 typedef struct {
-    unsigned char boot_type; // 0x00 - Inactive; 0x80 - Active (Bootable)
+    unsigned char boot;
     unsigned char start_head;
-    unsigned char start_sec:6;
-    unsigned char start_cyl_hi:2;
+    unsigned char start_sec;
     unsigned char start_cyl;
     unsigned char part_type;
     unsigned char end_head;
-    unsigned char end_sec:6;
-    unsigned char end_cyl_hi:2;
+    unsigned char end_sec;
     unsigned char end_cyl;
-    unsigned long abs_start_sec;
-    unsigned long sec_in_part;
+    unsigned char abs_start_sec_0;
+    unsigned char abs_start_sec_1;
+    unsigned char abs_start_sec_2;
+    unsigned char abs_start_sec_3;
+    unsigned char sec_in_part_0;
+    unsigned char sec_in_part_1;
+    unsigned char sec_in_part_2;
+    unsigned char sec_in_part_3;
 } PartEntry;
  
 typedef struct {
     unsigned char boot_code[MBR_DISK_SIGNATURE_OFFSET];
-    unsigned char disk_signature[4];
-    unsigned int pad;
-    unsigned char pt[62];
+    unsigned char disk_signature[5];
+    unsigned char pad;
+    PartEntry pt[4];
     unsigned short signature;
 } MBR;
 
@@ -175,59 +179,116 @@ static int __init sbd_init(void) {
     strcpy(Device.gd->disk_name, "sbd0");
     set_capacity(Device.gd, nsectors);
     Device.gd->queue = Queue;
+    memset(Device.data, 0x00, Device.size);
     MBR *mbr = kcalloc(1, sizeof(MBR), GFP_KERNEL);
     mbr->disk_signature[0] = 0x4a;
     mbr->disk_signature[1] = 0xad;
     mbr->disk_signature[2] = 0x36;
     mbr->disk_signature[3] = 0xd5;
     mbr->signature = 0xAA55;
-    mbr->pt[1] = 0x20; 
-    mbr->pt[0] = 0x01;
-    mbr->pt[3] = 0x03;
-    mbr->pt[2] = 0x83;
-    mbr->pt[5] = 0x5f;
-    mbr->pt[4] = 0x50;
-    mbr->pt[7] = 0x08;
-    mbr->pt[6] = 0x00;
-    mbr->pt[9] = 0x00;
-    mbr->pt[8] = 0x00;
-    mbr->pt[11] = 0x50;
-    mbr->pt[10] = 0x00;
-    mbr->pt[13] = 0x00;
-    mbr->pt[12] = 0x00;
-    mbr->pt[15] = 0x00;
-    mbr->pt[14] = 0x00;
-    mbr->pt[17] = 0x60;
-    mbr->pt[16] = 0x41; 
-    mbr->pt[19] = 0x03;
-    mbr->pt[18] = 0x05;
-    mbr->pt[21] = 0x3f;
-    mbr->pt[20] = 0x90;
-    mbr->pt[23] = 0x58;
-    mbr->pt[22] = 0x00;
-    mbr->pt[25] = 0x00;
-    mbr->pt[24] = 0x00;
-    mbr->pt[27] = 0x38;
-    mbr->pt[26] = 0x00;
-    mbr->pt[29] = 0x00;
-    mbr->pt[28] = 0x01;
+    
+    PartEntry ptr = {
+        .boot = 0x00,
+        .start_head = 0x00,
+        .start_sec = 0x00,
+        .start_cyl = 0x00,
+        .part_type = 0x83,
+        .end_head = 0x00,
+        .end_sec = 0x00,
+        .end_cyl = 0x00,
+        .abs_start_sec_0 = 0x01,
+        .abs_start_sec_1 = 0x00,
+        .abs_start_sec_2 = 0x00,
+        .abs_start_sec_3 = 0x00,
+        .sec_in_part_0 = 0x00,
+        .sec_in_part_1 = 0x50,
+        .sec_in_part_2 = 0x00,
+        .sec_in_part_3 = 0x00
+    };
+    PartEntry ptr2 = {
+        .boot = 0x00,
+        .start_head = 0x00,
+        .start_sec = 0x00,
+        .start_cyl = 0x00,
+        .part_type = 0x05,
+        .end_head = 0x00,
+        .end_sec = 0x00,
+        .end_cyl = 0x00,
+        .abs_start_sec_0 = 0x01,
+        .abs_start_sec_1 = 0x50,
+        .abs_start_sec_2 = 0x00,
+        .abs_start_sec_3 = 0x00,
+        .sec_in_part_0 = 0x00,
+        .sec_in_part_1 = 0x40,
+        .sec_in_part_2 = 0x01,
+        .sec_in_part_3 = 0x00
+    };
+    PartEntry lptr1 = {
+        .boot = 0x00,
+        .start_head = 0x00,
+        .start_sec = 0x00,
+        .start_cyl = 0x00,
+        .part_type = 0x83,
+        .end_head = 0x00,
+        .end_sec = 0x00,
+        .end_cyl = 0x00,
+        .abs_start_sec_0 = 0x01,
+        .abs_start_sec_1 = 0x00,
+        .abs_start_sec_2 = 0x00,
+        .abs_start_sec_3 = 0x00,
+        .sec_in_part_0 = 0x00,
+        .sec_in_part_1 = 0xA0,
+        .sec_in_part_2 = 0x00,
+        .sec_in_part_3 = 0x00
+    };
+    PartEntry lptr1link = {
+        .boot = 0x00,
+        .start_head = 0x00,
+        .start_sec = 0x00,
+        .start_cyl = 0x00,
+        .part_type = 0x05,
+        .end_head = 0x00,
+        .end_sec = 0x00,
+        .end_cyl = 0x00,
+        .abs_start_sec_0 = 0x00,
+        .abs_start_sec_1 = 0xA0,
+        .abs_start_sec_2 = 0x00,
+        .abs_start_sec_3 = 0x00,
+        .sec_in_part_0 = 0x00,
+        .sec_in_part_1 = 0xA0,
+        .sec_in_part_2 = 0x00,
+        .sec_in_part_3 = 0x00
+    };
+    PartEntry lptr2 = {
+        .boot = 0x00,
+        .start_head = 0x00,
+        .start_sec = 0x00,
+        .start_cyl = 0x00,
+        .part_type = 0x83,
+        .end_head = 0x00,
+        .end_sec = 0x00,
+        .end_cyl = 0x00,
+        .abs_start_sec_0 = 0x01,
+        .abs_start_sec_1 = 0x00,
+        .abs_start_sec_2 = 0x00,
+        .abs_start_sec_3 = 0x00,
+        .sec_in_part_0 = 0x00,
+        .sec_in_part_1 = 0xA0,
+        .sec_in_part_2 = 0x00,
+        .sec_in_part_3 = 0x00
+    };
+    unsigned long l1offset = 0x0a003c0;
+    unsigned long l2offset = 0x1e003c0;
     memcpy(Device.data, mbr, sizeof(MBR));
-
-    unsigned char logic1[] = {
-        0x41, 0x80, 0x83, 0x03, 0xd0, 0xbf, 0x00, 0x08, 0x00, 0x00, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00,
-        0xc1, 0xc0, 0x05, 0x03, 0x90, 0x3f, 0x00, 0x98, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0xaa 
-    };
-    memcpy(Device.data + 0x0b001c0, logic1, sizeof(logic1));
-    unsigned char logic2[] = {
-        0xc1, 0xe0, 0x83, 0x03, 0x90, 0x3f, 0x00, 0x08, 0x00, 0x00, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0xaa
-    };
-    memcpy(Device.data + 0x1e001c0, logic2, sizeof(logic1));        
+    memcpy(Device.data + PARTITION_TABLE_OFFSET, &ptr, sizeof(PartEntry));
+    memcpy(Device.data + PARTITION_TABLE_OFFSET + PARTITION_ENTRY_SIZE, &ptr2, sizeof(PartEntry));
+    memcpy(Device.data + l1offset - 2, &lptr1, sizeof(PartEntry));
+    memcpy(Device.data + l1offset - 2 + sizeof(PartEntry), &lptr1link, sizeof(PartEntry));
+    memcpy(Device.data + l1offset + 0x40 - 0x02, &(mbr->signature), 2);
+    memcpy(Device.data + l2offset - 2, &lptr2, sizeof(PartEntry));
+    memcpy(Device.data + l2offset + 0x40 - 0x02, &(mbr->signature), 2); 
     add_disk(Device.gd);
+    kfree(mbr);
     return 0;
 
 out_unregister:
